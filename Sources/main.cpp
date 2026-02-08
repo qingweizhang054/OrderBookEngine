@@ -1,9 +1,25 @@
-#include <chrono>
+﻿#include "OrderDispatcher.h"
+#include "OrderBook.h"
 #include <iostream>
-#include <string>
-#include <vector>
 
-#include "../Headers/MatchingEngine.h"
-#include "../Headers/OrderBook.h"
+int main() {
+    OrderBook book;
+    OrderDispatcher dispatcher(book);
 
-int main() { return 0; }
+    dispatcher.start();
+
+    dispatcher.pushOrder({"o1", OrderSide::BUY, 100.0, 10});
+    dispatcher.pushOrder({"o2", OrderSide::SELL, 99.0, 5});
+    dispatcher.pushOrder({"o3", OrderSide::SELL, 101.0, 10});
+
+    // let dispatcher finish
+    dispatcher.stop();
+
+    for (auto &trade : book.getExecutedTrades()) {
+        std::cout << "Trade: " << trade.buy_order_id << " vs "
+                  << trade.sell_order_id << " qty " << trade.quantity
+                  << " price " << trade.price << "\n";
+    }
+
+    return 0;
+}
