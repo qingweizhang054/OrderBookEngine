@@ -5,7 +5,6 @@
 #include <mutex>
 #include <optional>
 #include <set>
-#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -13,83 +12,85 @@
 enum class OrderSide { BUY, SELL };
 enum class OrderType { LIMIT, MARKET };
 
-// Order structure definition
 struct Order {
-  std::string id;
-  OrderSide side;
-  double price;
-  OrderType type = OrderType::LIMIT;
-  int quantity;
-  std::chrono::steady_clock::time_point timestamp;
+    std::string id;
+    OrderSide side;
+    double price;
+    OrderType type;
+    int quantity;
+    std::chrono::steady_clock::time_point timestamp;
 
-  Order(const std::string& id_, OrderSide side_, double price_, int quantity_,
-        OrderType type_ = OrderType::LIMIT,
-        std::chrono::steady_clock::time_point ts =
-            std::chrono::steady_clock::now())
-      : id(id_),
-        side(side_),
-        price(price_),
-        type(type_),
-        quantity(quantity_),
-        timestamp(ts) {}
+    Order() = default;  
+
+
+    Order(const std::string &id_, OrderSide side_, double price_, int quantity_,
+          OrderType type_ = OrderType::LIMIT,
+          std::chrono::steady_clock::time_point ts =
+              std::chrono::steady_clock::now())
+        : id(id_), side(side_), price(price_), type(type_), quantity(quantity_),
+          timestamp(ts) {}
 };
 
-// Trade structure definition
 struct Trade {
-  std::string buy_order_id;
-  std::string sell_order_id;
-  int quantity;
-  double price;
-  std::chrono::steady_clock::time_point timestamp;
+    std::string buy_order_id;
+    std::string sell_order_id;
+    int quantity;
+    double price;
+    std::chrono::steady_clock::time_point timestamp;
 };
 
-// Comparator for buy orders (bids)
 struct BidComparator {
-  bool operator()(const Order& a, const Order& b) const {
-    if (a.type != b.type) return a.type == OrderType::MARKET;
-    if (a.price != b.price) return a.price > b.price;
-    return a.timestamp < b.timestamp;
-  }
+    bool operator()(const Order &a, const Order &b) const {
+        if (a.type != b.type)
+            return a.type == OrderType::MARKET;
+        if (a.price != b.price)
+            return a.price > b.price;
+        return a.timestamp < b.timestamp;
+    }
 };
 
-// Comparator for sell orders (asks)
 struct AskComparator {
-  bool operator()(const Order& a, const Order& b) const {
-    if (a.type != b.type) return a.type == OrderType::MARKET;
-    if (a.price != b.price) return a.price < b.price;
-    return a.timestamp < b.timestamp;
-  }
+    bool operator()(const Order &a, const Order &b) const {
+        if (a.type != b.type)
+            return a.type == OrderType::MARKET;
+        if (a.price != b.price)
+            return a.price < b.price;
+        return a.timestamp < b.timestamp;
+    }
 };
 
-// OrderBook class definition
 class OrderBook {
- public:
-  using TradeCallback = std::function<void(const Trade&)>;
+public:
+    using TradeCallback = std::function<void(const Trade &)>;
 
-  bool addOrder(const Order& order);
-  bool cancelOrder(const std::string& order_id);
-  bool modifyOrder(const std::string& order_id, double new_price,
-                   int new_quantity);
-  void matchOrders();
+    bool addOrder(const Order &order);
+    bool cancelOrder(const std::string &order_id);
+    bool modifyOrder(const std::string &order_id, double new_price,
+                     int new_quantity);
 
-  std::optional<Order> getTopBid() const;
-  std::optional<Order> getTopAsk() const;
+    void matchOrders();
 
-  void setTradeCallback(TradeCallback cb);
-  const std::vector<Trade>& getExecutedTrades() const;
+    std::optional<Order> getTopBid() const;
+    std::optional<Order> getTopAsk() const;
 
- private:
-  void reportTrade(const Trade& t);
+    void setTradeCallback(TradeCallback cb);
 
-  std::unordered_map<std::string, std::set<Order, BidComparator>::iterator>
-      buy_lookup_;
-  std::unordered_map<std::string, std::set<Order, AskComparator>::iterator>
-      sell_lookup_;
-  std::set<Order, BidComparator> buy_orders_;
-  std::set<Order, AskComparator> sell_orders_;
+    const std::vector<Trade> &getExecutedTrades() const;
 
-  std::vector<Trade> executed_trades_;
-  TradeCallback trade_callback_;
+private:
+    void reportTrade(const Trade &t);
 
-  mutable std::recursive_mutex mutex_;
+    std::unordered_map<std::string,
+                       std::set<Order, BidComparator>::iterator>
+        buy_lookup_;
+    std::unordered_map<std::string,
+                       std::set<Order, AskComparator>::iterator>
+        sell_lookup_;
+    std::set<Order, BidComparator> buy_orders_;
+    std::set<Order, AskComparator> sell_orders_;
+
+    std::vector<Trade> executed_trades_;
+    TradeCallback trade_callback_;
+
+    mutable std::recursive_mutex mutex_;
 };

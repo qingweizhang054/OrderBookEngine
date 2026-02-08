@@ -1,9 +1,17 @@
-﻿# .clang-format
-
-# Run manually to reformat a file:
-# clang-format -i --style=file <file>
+﻿---
+Language: Cpp
 BasedOnStyle: Google
-DerivePointerAlignment: false
 
-# Specify language and language standard
-Standard: c++17
+# Fix: Modern versions use 'Latest' or 'Auto' for better compatibility
+# 'c++17' is sometimes rejected; 'Latest' ensures C++17/20/23 support
+Standard: Latest
+
+# Personal Preference: Keep your pointer alignment setting
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+# Crucial for Chinese Characters:
+# This prevents ClangFormat from breaking lines in the middle of a 
+# multi-byte character (UTF-8) which can happen with Chinese text.
+ColumnLimit: 100
+---

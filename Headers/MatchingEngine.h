@@ -1,18 +1,13 @@
-﻿// Headers/MatchingEngine.h
-#pragma once
-
-#include <vector>
+﻿#pragma once
 
 #include "OrderBook.h"
 
 class MatchingEngine {
- public:
-  MatchingEngine() = default;
+public:
+    explicit MatchingEngine(OrderBook &book);
 
-  // ← only a declaration, no body here
-  std::vector<Trade> match();
-  OrderBook& getOrderBook() { return internal_order_book_; }
+    void execute(const Order &order);
 
- private:
-  OrderBook internal_order_book_;
+private:
+    OrderBook &book_;
 };
